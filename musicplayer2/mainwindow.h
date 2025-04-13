@@ -162,6 +162,7 @@ private:
     QPushButton *pauseButton;
     QPushButton *stopButton;
     QPushButton *playlistButton;
+    QPushButton *deleteButton;
     
     // Use our template class for playlist management
     PlaylistManager<QUrl, QString> playlist;
@@ -170,6 +171,7 @@ private:
     int currentSongIndex;
 
     void loadSong();
+    void deleteSong();
 };
 
 #endif // MAINWINDOW_H

@@ -106,7 +106,6 @@ void MusicPlayer::createControls() {
     layout->addWidget(pauseButton);
     layout->addWidget(stopButton);
     layout->addWidget(playlistButton);
-    
     // Setup main window
     setCentralWidget(central);
     setWindowTitle("Music Player");
@@ -151,11 +150,16 @@ void MusicPlayer::showPlaylist() {
         // Add Play button
         QPushButton* playButton = new QPushButton("Play Selected", &dialog);
         layout->addWidget(playButton);
+
+        // Add Delete button
+        QPushButton* deleteButton = new QPushButton("Delete Selected", &dialog);
+        layout->addWidget(deleteButton);
         
         // Disable play button if no songs
         if (playlist.isEmpty()) {
             list->addItem("No songs added yet");
             playButton->setEnabled(false);
+            deleteButton->setEnabled(false);
         }
         
         // Connect play button - with exception handling
@@ -173,6 +177,38 @@ void MusicPlayer::showPlaylist() {
                 handleError("Playback Error: " + QString(e.what()));
             } catch (const std::exception& e) {
                 handleError("Error playing selected song: " + QString(e.what()));
+            }
+        });
+        
+        // Connect delete button - delete the selected song
+        connect(deleteButton, &QPushButton::clicked, &dialog, [this, list, &dialog]() {
+            try {
+                int row = list->currentRow();
+                if (row >= 0 && row < static_cast<int>(playlist.size())) {
+                    // Get the song name before removing
+                    QString songName = playlist.getDisplayInfo(row);
+                    
+                    // Remove from playlist
+                    playlist.removeAt(row);
+                    
+                    // Update current song index if needed
+                    if (row == currentSongIndex) {
+                        // Song being played was deleted
+                        player->stop();
+                        currentSongIndex = -1;
+                    } else if (row < currentSongIndex) {
+                        // A song before current was deleted, adjust index
+                        currentSongIndex--;
+                    }
+                    
+                    updateDisplay("Deleted: " + songName);
+                    
+                    // Refresh the playlist dialog
+                    dialog.accept();
+                    showPlaylist();
+                }
+            } catch (const std::exception& e) {
+                handleError("Error deleting song: " + QString(e.what()));
             }
         });
         
@@ -234,5 +270,76 @@ void MusicPlayer::loadSong() {
         }
     } catch (const std::exception& e) {
         handleError("File Error: " + QString(e.what()));
+    }
+}
+
+void MusicPlayer::deleteSong() {
+    try {
+        // If no songs in playlist, nothing to delete
+        if (playlist.isEmpty()) {
+            updateDisplay("No songs to delete");
+            return;
+        }
+
+        // Create a dialog to select song to delete
+        QDialog dialog(this);
+        dialog.setWindowTitle("Delete Song from Playlist");
+        dialog.resize(400, 300);
+        
+        // Create layout
+        QVBoxLayout* layout = new QVBoxLayout(&dialog);
+        
+        // Create list widget
+        QListWidget* list = new QListWidget(&dialog);
+        layout->addWidget(list);
+        
+        // Get all song names from template
+        std::vector<QString> displayItems = playlist.getAllDisplayItems();
+        for (const QString& name : displayItems) {
+            list->addItem(name);
+        }
+        
+        // Set current selection if exists
+        if (currentSongIndex >= 0 && currentSongIndex < static_cast<int>(playlist.size())) {
+            list->setCurrentRow(currentSongIndex);
+        }
+        
+        // Add Delete button
+        QPushButton* deleteButton = new QPushButton("Delete Selected", &dialog);
+        layout->addWidget(deleteButton);
+        
+        // Connect delete button
+        connect(deleteButton, &QPushButton::clicked, &dialog, [this, list, &dialog]() {
+            int row = list->currentRow();
+            if (row >= 0 && row < static_cast<int>(playlist.size())) {
+                try {
+                    // Get the song name before removing
+                    QString songName = playlist.getDisplayInfo(row);
+                    
+                    // Remove from playlist
+                    playlist.removeAt(row);
+                    
+                    // Update current song index if needed
+                    if (row == currentSongIndex) {
+                        // Song being played was deleted
+                        player->stop();
+                        currentSongIndex = -1;
+                    } else if (row < currentSongIndex) {
+                        // A song before current was deleted, adjust index
+                        currentSongIndex--;
+                    }
+                    
+                    updateDisplay("Deleted: " + songName);
+                    dialog.accept();
+                } catch (const std::exception& e) {
+                    handleError("Error deleting song: " + QString(e.what()));
+                }
+            }
+        });
+        
+        // Show dialog
+        dialog.exec();
+    } catch (const std::exception& e) {
+        handleError("Error showing delete dialog: " + QString(e.what()));
     }
 }
