@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <QStatusBar>
 
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -55,8 +56,20 @@ void MusicPlayer::pause() {
 }
 
 void MusicPlayer::stop() {
-    player->stop();
-    updateDisplay("Stopped");
+    try {
+        // Stop playback
+        player->stop();
+        
+        // Reset position to beginning
+        if (currentSongIndex >= 0) {
+            player->setPosition(0);
+            updateDisplay("Stopped: " + playlist.getDisplayInfo(currentSongIndex));
+        } else {
+            updateDisplay("Stopped");
+        }
+    } catch (const std::exception& e) {
+        handleError("Stop error: " + QString(e.what()));
+    }
 }
 
 void MusicPlayer::setSource(const QUrl& source) {
@@ -84,12 +97,14 @@ void MusicPlayer::createControls() {
     loadButton = new QPushButton("Load Music");
     playButton = new QPushButton("Play");
     pauseButton = new QPushButton("Pause");
+    stopButton = new QPushButton("Stop");
     playlistButton = new QPushButton("Song Playlist");
     
     // Add buttons to layout
     layout->addWidget(loadButton);
     layout->addWidget(playButton);
     layout->addWidget(pauseButton);
+    layout->addWidget(stopButton);
     layout->addWidget(playlistButton);
     
     // Setup main window
@@ -101,6 +116,7 @@ void MusicPlayer::createControls() {
     connect(loadButton, &QPushButton::clicked, this, &MusicPlayer::loadSong);
     connect(playButton, &QPushButton::clicked, this, &MusicPlayer::play);
     connect(pauseButton, &QPushButton::clicked, this, &MusicPlayer::pause);
+    connect(stopButton, &QPushButton::clicked, this, &MusicPlayer::stop);
     connect(playlistButton, &QPushButton::clicked, this, &MusicPlayer::showPlaylist);
 }
 

@@ -79,6 +79,10 @@ void *MusicPlayer::qt_metacast(const char *_clname)
     if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN11MusicPlayerE_t>.strings))
         return static_cast<void*>(this);
+    if (!strcmp(_clname, "IPlayer"))
+        return static_cast< IPlayer*>(this);
+    if (!strcmp(_clname, "IPlayerUI"))
+        return static_cast< IPlayerUI*>(this);
     return QMainWindow::qt_metacast(_clname);
 }
 

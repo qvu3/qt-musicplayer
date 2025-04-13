@@ -160,6 +160,7 @@ private:
     QPushButton *loadButton;
     QPushButton *playButton;
     QPushButton *pauseButton;
+    QPushButton *stopButton;
     QPushButton *playlistButton;
     
     // Use our template class for playlist management
